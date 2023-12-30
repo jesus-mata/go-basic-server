@@ -9,7 +9,7 @@ RUN go mod download
 
 COPY *.go ./
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /server
+RUN CGO_ENABLED=0 GOOS=linux go build -o /server
 
 # Run the tests in the container
 FROM build-stage AS run-test-stage
