@@ -1,0 +1,9 @@
+# gitignore for golang
+# ====================
+.idea
+*.exe
+*.exe~
+*.dll
+*.so
+
+bin/*
