@@ -28,7 +28,7 @@ func main() {
 		})
 	})
 
-	e.GET("/hello/:name", func(c echo.Context) error {
+	g.GET("/hello/:name", func(c echo.Context) error {
 		name := c.Param("name")
 		return c.JSON(http.StatusOK, map[string]string{
 			"message": "Hello " + name,
