@@ -2,6 +2,7 @@ package main
 
 import (
 	"log/slog"
+	"net/http"
 	"strings"
 
 	"github.com/labstack/echo/v4"
@@ -9,24 +10,34 @@ import (
 
 func main() {
 	e := echo.New()
-	e.GET("/", func(c echo.Context) error {
+
+	g := e.Group("/demo/api/v1")
+
+	g.GET("/", func(c echo.Context) error {
 		slog.Info("Hello World",
 			slog.String("key1", "value1"),
 		)
-		return c.JSON(200, map[string]string{
+		return c.JSON(http.StatusOK, map[string]string{
 			"message": "Hello World",
 		})
 	})
 
-	e.GET("/health", func(c echo.Context) error {
-		return c.JSON(200, map[string]string{
+	g.GET("/health", func(c echo.Context) error {
+		return c.JSON(http.StatusOK, map[string]string{
 			"status": "OK",
 		})
 	})
 
-	e.GET("/subdomain", func(c echo.Context) error {
+	e.GET("/hello/:name", func(c echo.Context) error {
+		name := c.Param("name")
+		return c.JSON(http.StatusOK, map[string]string{
+			"message": "Hello " + name,
+		})
+	})
+
+	g.GET("/subdomain", func(c echo.Context) error {
 		host := c.Request().Host
-		return c.JSON(200, map[string]string{
+		return c.JSON(http.StatusOK, map[string]string{
 			"subdomain": getSubdomain(host),
 		})
 	})
