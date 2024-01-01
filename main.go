@@ -1,14 +1,41 @@
 package main
 
 import (
+	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
 
 func main() {
+
+	if len(os.Args) <= 1 {
+		runServer()
+	}
+
+	action := os.Args[1]
+
+	switch action {
+	case "healthcheck":
+		healthCheck("/demo/api/v1/health")
+	case "run":
+		runServer()
+	default:
+		fmt.Println("Usage: ./main <action>")
+		fmt.Println("action: run | healthcheck")
+		fmt.Println("Example: ./main run or ./main healthcheck")
+		fmt.Println("If no action is provided, then the application will run")
+		panic("Unknown action")
+	}
+}
+
+func runServer() {
+	appName := os.Getenv("APP_NAME")
+
 	e := echo.New()
 
 	g := e.Group("/demo/api/v1")
@@ -32,6 +59,20 @@ func main() {
 		name := c.Param("name")
 		return c.JSON(http.StatusOK, map[string]string{
 			"message": "Hello " + name,
+		})
+	})
+
+	g.GET("/info", func(c echo.Context) error {
+		hostname, err := os.Hostname()
+		if err != nil {
+			slog.Error("Error getting hostname",
+				slog.String("error", err.Error()),
+			)
+			hostname = "unknown"
+		}
+		return c.JSON(http.StatusOK, map[string]string{
+			"host": hostname,
+			"app":  appName,
 		})
 	})
 
@@ -60,4 +101,30 @@ func getSubdomain(host string) string {
 	}
 
 	return ""
+}
+
+// Check the health of the application
+// Make a request to the health endpoint and check the status code
+// If the status code is 200, then the application is healthy and return exit code 0
+// If the status code is not 200, then the application is not healthy and return exit code 1
+func healthCheck(healthEndpoint string) {
+
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	url := "http://localhost:8080/" + strings.TrimPrefix(healthEndpoint, "/")
+	//demo/api/v1/health
+	resp, err := client.Get(url)
+	if err != nil {
+		fmt.Println("Error:", err.Error())
+		os.Exit(1)
+	}
+
+	fmt.Println("Status Code:", resp.StatusCode)
+
+	if resp.StatusCode != http.StatusOK {
+		os.Exit(1)
+	}
+
 }
