@@ -27,6 +27,15 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY_IMAGE }}
+          tags: |
+            type=ref,event=branch
+            # minimal (short sha)
+            # minimal
+            type=edge
+            # define default branch
+            type=edge,branch=main
+            # minimal (short sha)
+            type=sha,prefix=
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -36,6 +45,11 @@ jobs:
         with:
           username: chuyms07
           password: ${{ secrets.DOCKERHUB_TOKEN }}
+      - name: Set short git commit SHA
+        id: vars
+        run: |
+          calculatedSha=$(git rev-parse --short ${{ github.sha }})
+          echo "COMMIT_SHORT_SHA=$calculatedSha" >> $GITHUB_ENV
       - name: Build and push by digest
         id: build
         uses: docker/build-push-action@v5
