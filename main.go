@@ -57,19 +57,21 @@ func runServer() {
 
 	g.GET("/hello/:name", func(c echo.Context) error {
 		name := c.Param("name")
+
+		hostname := getHostname()
+
+		slog.Info("Request to hello endpoint",
+			slog.String("name", name),
+			slog.String("host", c.Request().Host),
+			slog.String("hostname", getHostname()),
+		)
 		return c.JSON(http.StatusOK, map[string]string{
-			"message": "Hello " + name,
+			"message": "Hello " + name + " from " + hostname + "!",
 		})
 	})
 
 	g.GET("/info", func(c echo.Context) error {
-		hostname, err := os.Hostname()
-		if err != nil {
-			slog.Error("Error getting hostname",
-				slog.String("error", err.Error()),
-			)
-			hostname = "unknown"
-		}
+		hostname := getHostname()
 		return c.JSON(http.StatusOK, map[string]string{
 			"host": hostname,
 			"app":  appName,
@@ -101,6 +103,18 @@ func getSubdomain(host string) string {
 	}
 
 	return ""
+}
+
+// Returns the hostname of the machine
+func getHostname() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		slog.Error("Error getting hostname",
+			slog.String("error", err.Error()),
+		)
+		hostname = "unknown"
+	}
+	return hostname
 }
 
 // Check the health of the application
